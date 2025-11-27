@@ -6,11 +6,11 @@ import CalendarDay from './CalendarDay';
 import SummaryCards from './SummaryCards';
 import DayDetailModal from './DayDetailModal';
 import { JOB_STATUS } from '../types/job';
-import { 
-  getJobsFromStorage, 
-  saveJobsToStorage, 
-  calculateDayCapacity, 
-  PRODUCTION_LINES 
+import {
+  getJobsFromStorage,
+  saveJobsToStorage,
+  calculateDayCapacity,
+  PRODUCTION_LINES
 } from '../utils/jobUtils';
 import {
   AppBar,
@@ -40,7 +40,7 @@ import {
 const Dashboard = () => {
   const { user, logout } = useAuth();
   const { enqueueSnackbar } = useSnackbar();
-  
+
   const [jobs, setJobs] = useState([]);
   const [selectedProductionLine, setSelectedProductionLine] = useState('assorted');
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -50,23 +50,112 @@ const Dashboard = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState(0);
 
+  const [unfirmedJobs, setUnfirmedJobs] = useState([]);
+  const [firmedJobs, setFirmedJobs] = useState([]);
+  // const [jobs, setJobs] = useState([]); // Your main jobs array
+
+  // In your Dashboard component, replace the direct setState calls with:
   useEffect(() => {
     const loadedJobs = getJobsFromStorage();
     setJobs(loadedJobs);
   }, []);
 
-  const firmedJobs = jobs.filter(job => 
-    job.status === JOB_STATUS.FIRMED && 
-    job.productionLine === selectedProductionLine
-  );
-  
-  const unfirmedJobs = jobs.filter(job => 
-    job.status === JOB_STATUS.UNFIRMED && 
-    job.productionLine === selectedProductionLine
-  );
+  useEffect(() => {
+    // Filter jobs whenever jobs or selectedProductionLine changes
+    const filteredFirmedJobs = jobs.filter(job =>
+      job.status === JOB_STATUS.FIRMED &&
+      job.productionLine === selectedProductionLine
+    );
 
-  const handleDragStart = (e, job) => {
+    const filteredUnfirmedJobs = jobs.filter(job =>
+      job.status === JOB_STATUS.UNFIRMED &&
+      job.productionLine === selectedProductionLine
+    );
+
+    setFirmedJobs(filteredFirmedJobs);
+    setUnfirmedJobs(filteredUnfirmedJobs);
+  }, [jobs, selectedProductionLine]);
+
+
+  const handleDragStart = (e, job, fromDate = null) => {
+    const jobData = {
+      ...job,
+      originalDate: fromDate,
+      draggedFrom: fromDate ? 'calendar' : 'jobList'
+    };
+    e.dataTransfer.setData('application/json', JSON.stringify(jobData));
+    e.dataTransfer.effectAllowed = 'move';
     setDraggedJob(job);
+  };
+
+  const handleDrop = (e, targetDate) => {
+    e.preventDefault();
+
+    try {
+      const jobData = JSON.parse(e.dataTransfer.getData('application/json'));
+
+      if (jobData.draggedFrom === 'calendar') {
+        // Job was dragged from calendar - move to unfirmed
+        handleUnfirmedJobDrop(jobData);
+      } else {
+        // Job was dragged from job list - schedule it
+        scheduleJob(jobData, targetDate);
+      }
+    } catch (error) {
+      console.error('Error handling drop:', error);
+    }
+
+    setDraggedJob(null);
+  };
+
+  const scheduleJob = (job, targetDate) => {
+    const updatedJobs = jobs.map(j =>
+      j.id === job.id
+        ? {
+          ...j,
+          scheduledDate: targetDate,
+          status: JOB_STATUS.FIRMED
+        }
+        : j
+    );
+
+    setJobs(updatedJobs);
+    saveJobsToStorage(updatedJobs);
+
+    enqueueSnackbar(
+      `${job.name} has been scheduled for ${new Date(targetDate).toLocaleDateString()}`,
+      { variant: 'success' }
+    );
+  };
+
+  const handleUnfirmedJobDrop = (droppedJob) => {
+    const updatedJobs = jobs.map(job =>
+      job.id === droppedJob.id
+        ? {
+          ...job,
+          scheduledDate: null,
+          status: JOB_STATUS.UNFIRMED
+        }
+        : job
+    );
+
+    setJobs(updatedJobs);
+    saveJobsToStorage(updatedJobs);
+
+    enqueueSnackbar(
+      `${droppedJob.name} has been moved to unfirmed jobs`,
+      { variant: 'info' }
+    );
+  };
+
+
+  const handleJobDragStart = (e, job, originalDate) => {
+    const jobData = {
+      ...job,
+      originalDate: originalDate,
+      draggedFrom: 'calendar'
+    };
+    e.dataTransfer.setData('application/json', JSON.stringify(jobData));
     e.dataTransfer.effectAllowed = 'move';
   };
 
@@ -75,37 +164,11 @@ const Dashboard = () => {
     e.dataTransfer.dropEffect = 'move';
   };
 
-  const handleDrop = (e, targetDate) => {
-    e.preventDefault();
-    
-    if (!draggedJob) return;
-
-    const updatedJobs = jobs.map(job => {
-      if (job.id === draggedJob.id) {
-        return {
-          ...job,
-          scheduledDate: targetDate,
-          status: JOB_STATUS.FIRMED
-        };
-      }
-      return job;
-    });
-
-    setJobs(updatedJobs);
-    saveJobsToStorage(updatedJobs);
-    setDraggedJob(null);
-
-    enqueueSnackbar(
-      `${draggedJob.name} has been scheduled for ${new Date(targetDate).toLocaleDateString()}`,
-      { variant: 'success' }
-    );
-  };
-  
   const handleDayClick = (date) => {
     setSelectedDate(date);
     setIsModalOpen(true);
   };
-  
+
   const resetToSampleData = () => {
     localStorage.removeItem('job_planner_jobs');
     const sampleJobs = getJobsFromStorage();
@@ -146,11 +209,11 @@ const Dashboard = () => {
   const calendarDays = generateCalendarDays();
 
   // Calculate summary statistics
-  const scheduledJobs = jobs.filter(job => 
-    job.status === JOB_STATUS.FIRMED && 
+  const scheduledJobs = jobs.filter(job =>
+    job.status === JOB_STATUS.FIRMED &&
     job.productionLine === selectedProductionLine
   );
-  
+
   const totalScheduledHours = scheduledJobs.reduce((sum, job) => sum + job.requiredHours, 0);
   const selectedLine = PRODUCTION_LINES.find(line => line.id === selectedProductionLine);
   const monthlyCapacity = selectedLine ? selectedLine.dailyCapacity * 30 : 525;
@@ -159,7 +222,7 @@ const Dashboard = () => {
   return (
     <Box sx={{ flexGrow: 1 }}>
       {/* Header */}
-      <AppBar position="sticky" sx={{backgroundColor: '#0077b6'}}>
+      <AppBar position="sticky" sx={{ backgroundColor: '#0077b6' }}>
         <Toolbar>
           <Box sx={{ flexGrow: 1 }}>
             <Typography variant="h6" component="div">
@@ -173,8 +236,8 @@ const Dashboard = () => {
             <Typography variant="body2">
               Welcome, {user?.username}
             </Typography>
-            <Button 
-              color="inherit" 
+            <Button
+              color="inherit"
               startIcon={<LogoutIcon />}
               onClick={logout}
             >
@@ -206,8 +269,8 @@ const Dashboard = () => {
             </Box>
 
             <Paper sx={{ mb: 2 }}>
-              <Tabs 
-                value={activeTab} 
+              <Tabs
+                value={activeTab}
                 onChange={(e, newValue) => setActiveTab(newValue)}
                 variant="fullWidth"
               >
@@ -215,21 +278,24 @@ const Dashboard = () => {
                 <Tab label="Firmed Job" />
               </Tabs>
             </Paper>
-            
+
             {activeTab === 0 && (
               <JobList
                 title="Unfirmed Job"
                 jobs={unfirmedJobs}
-                onDragStart={handleDragStart}
-                emptyMessage="All orders scheduled"
+                onDragStart={(e, job) => handleDragStart(e, job)} // No fromDate for job list
+                onJobDrop={handleUnfirmedJobDrop}
+                acceptDrop={true}
+                emptyMessage="Drag jobs from calendar to unschedule them"
               />
             )}
-            
+
             {activeTab === 1 && (
               <JobList
                 title="Firmed Job"
                 jobs={firmedJobs}
-                onDragStart={handleDragStart}
+                onDragStart={(e, job) => handleDragStart(e, job)} // No fromDate for job list
+                acceptDrop={false}
                 emptyMessage="No confirmed orders"
               />
             )}
@@ -240,15 +306,15 @@ const Dashboard = () => {
             {/* Controls */}
             <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
               <Box display="flex" gap={1}>
-                <Button 
-                  variant="outlined" 
+                <Button
+                  variant="outlined"
                   startIcon={<FilterIcon />}
                   size="small"
                 >
                   Filters
                 </Button>
-                <Button 
-                  variant="outlined" 
+                <Button
+                  variant="outlined"
                   startIcon={<RefreshIcon />}
                   onClick={resetToSampleData}
                   size="small"
@@ -256,7 +322,7 @@ const Dashboard = () => {
                   Reset Data
                 </Button>
               </Box>
-              
+
               <Box display="flex" gap={1}>
                 <Button
                   variant={viewMode === 'summary' ? 'contained' : 'outlined'}
@@ -306,29 +372,70 @@ const Dashboard = () => {
             {/* Calendar Grid */}
             <Paper sx={{ p: 2 }}>
               <Grid container>
-                
-                {calendarDays.map((date, index) => {
-                  const dateString = date.toISOString().split('T')[0];
-                  const capacity = calculateDayCapacity(dateString, jobs, selectedProductionLine);
-                  
-                  return (
-                    <Grid item md key={index}>
-                      <CalendarDay
-                        date={date}
-                        capacity={capacity}
-                        onDrop={handleDrop}
-                        onDragOver={handleDragOver}
-                        onClick={handleDayClick}
-                      />
+                <Grid container>
+                  {['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'].map((day, index) => (
+                    <Grid
+                      item
+                      xs={12}
+                      sm={6}
+                      md
+                      key={day}
+                      sx={{
+                        textAlign: 'center',
+                        fontWeight: 'bold',
+                        backgroundColor: '#f5f5f5',
+                        py: 1,
+                        border: '1px solid #e0e0e0',
+                        minHeight: 40,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                      }}
+                    >
+                      <Typography variant="body2" sx={{ fontSize: { xs: '0.7rem', sm: '0.8rem', md: '0.9rem' } }}>
+                        {day.substring(0, 3)}
+                      </Typography>
                     </Grid>
-                  );
-                })}
+                  ))}
+                </Grid>
+
+                <Grid container>
+                  {calendarDays.map((date, index) => {
+                    const dateString = date.toISOString().split('T')[0];
+                    const dayOfWeek = date.getDay(); // 0 = Sunday, 1 = Monday, etc.
+                    const capacity = calculateDayCapacity(dateString, jobs, selectedProductionLine);
+
+                    return (
+                      <Grid
+                        item
+                        xs={12}
+                        sm={6}
+                        md
+                        key={index}
+                        sx={{
+                          display: 'flex',
+                          justifyContent: 'center',
+                          p: 0.5
+                        }}
+                      >
+                        <CalendarDay
+                          date={date}
+                          capacity={capacity}
+                          onDrop={handleDrop}
+                          onDragOver={handleDragOver}
+                          onClick={handleDayClick}
+                          handleJobDragStart={handleJobDragStart}
+                        />
+                      </Grid>
+                    );
+                  })}
+                </Grid>
               </Grid>
             </Paper>
           </Grid>
         </Grid>
       </Container>
-      
+
       {/* Day Detail Modal */}
       {selectedDate && (
         <DayDetailModal
