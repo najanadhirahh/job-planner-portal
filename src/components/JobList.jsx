@@ -5,7 +5,8 @@ import {
   CardContent,
   Typography,
   Box,
-  Paper
+  Paper,
+  Stack
 } from '@mui/material';
 
 const JobList = ({
@@ -59,12 +60,14 @@ const JobList = ({
       onDrop={handleDrop}
     >
       <CardContent>
+        <Stack spacing={1} mb={2}> 
         <Typography variant="h6" gutterBottom>
           {title}
         </Typography>
         <Typography variant="body2" color="text.secondary" gutterBottom>
           Total: {jobs.length} orders
         </Typography>
+        </Stack>
 
         {acceptDrop && (
           <Typography variant="caption" color="primary" display="block" gutterBottom>

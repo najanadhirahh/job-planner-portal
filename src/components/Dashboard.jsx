@@ -256,7 +256,7 @@ const Dashboard = () => {
         </Toolbar>
       </AppBar>
 
-      <Container maxWidth="xl" sx={{ mt: 3, mb: 3 }}>
+      <Box   sx={{ m: 3 }}>
         <Grid container spacing={3}>
           {/* Left Panel - Job Lists */}
           <Grid item xs={12} lg={3}>
@@ -314,7 +314,12 @@ const Dashboard = () => {
           </Grid>
 
           {/* Right Panel - Calendar and Summary */}
-          <Grid item xs={12} lg={9}>
+          <Grid item xs={12} lg={9} 
+          sx={{  maxHeight: '90vh', overflowY: 'auto', maxWidth: '100%',
+              "&::-webkit-scrollbar": {
+                  display: "none",
+              },
+             }}>
             {/* Controls */}
             <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
               <Box display="flex" gap={1}>
@@ -369,7 +374,7 @@ const Dashboard = () => {
             />
 
             {/* Calendar Navigation */}
-            <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+            <Box display="flex" justifyContent="space-between" alignItems="center" >
               <IconButton onClick={() => navigateMonth('prev')}>
                 <ChevronLeft />
               </IconButton>
@@ -382,21 +387,20 @@ const Dashboard = () => {
             </Box>
 
             {/* Calendar Grid */}
-            <Paper sx={{ p: 2 }}>
+            <Paper>
               <Grid container>
                 <Grid container>
                   {['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'].map((day, index) => (
                     <Grid
                       item
-                      xs={12}
-                      sm={6}
+                      xs={12 / 7}
                       md
                       key={day}
                       sx={{
                         textAlign: 'center',
                         fontWeight: 'bold',
                         backgroundColor: '#f5f5f5',
-                        py: 1,
+                        // py: 1,
                         border: '1px solid #e0e0e0',
                         minHeight: 40,
                         display: 'flex',
@@ -415,25 +419,25 @@ const Dashboard = () => {
                   {calendarDays.map((date, index) => {
                     const dateString = date.toISOString().split('T')[0];
                     const dayOfWeek = date.getDay(); // 0 = Sunday, 1 = Monday, etc.
+                    console.log('dayOfWeek', dayOfWeek);
                     
                     const capacity = calculateDayCapacity(
                       dateString, 
                       jobs, 
-                      selectedProductionLine === "all" ? null : selectedProductionLine
+                      selectedProductionLine === "all" ? "all" : selectedProductionLine
                     );
 
                     return (
                       <Grid
                         item
-                        xs={12}
-                        sm={6}
-                        md
+                        xs={12 / 7}
+                        // md
                         key={index}
-                        sx={{
-                          display: 'flex',
-                          justifyContent: 'center',
-                          p: 0.5
-                        }}
+                        // sx={{
+                        //   display: 'flex',
+                        //   justifyContent: 'flex-start',
+                        //   p: 0.5
+                        // }}
                       >
                         <CalendarDay
                           date={date}
@@ -451,7 +455,7 @@ const Dashboard = () => {
             </Paper>
           </Grid>
         </Grid>
-      </Container>
+      </Box>
 
       {/* Day Detail Modal */}
       {selectedDate && (

@@ -5,6 +5,7 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import LoginPage from './components/LoginPage';
 import Dashboard from './components/Dashboard';
 import { SnackbarProvider } from 'notistack';
+import { GlobalStyles } from '@mui/material';
 
 const theme = createTheme({
   palette: {
@@ -23,7 +24,7 @@ const AppContent = () => {
   if (isLoading) {
     return (
       <div style={{ 
-        minHeight: '100vh', 
+        height: '100vh',
         display: 'flex', 
         alignItems: 'center', 
         justifyContent: 'center' 
@@ -33,11 +34,25 @@ const AppContent = () => {
     );
   }
 
-  return user ? <Dashboard /> : <LoginPage />;
-};
+  return (
+    <div style={{ 
+      height: '100vh',
+      display: 'flex',
+      flexDirection: 'column',
+    }}>
+      {user ? <Dashboard /> : <LoginPage />}
+    </div>
+  );};
 
 const App = () => (
   <ThemeProvider theme={theme}>
+    <GlobalStyles
+        styles={{
+          html: { overflow: "hidden", height: "100vh", margin: 0, padding: 0 },
+          body: { overflow: "hidden", height: "100vh", margin: 0, padding: 0 },
+          "#root": { height: "100vh" }, // if you're using React root div
+        }}
+      />
     <CssBaseline />
     <SnackbarProvider maxSnack={3}>
       <AuthProvider>

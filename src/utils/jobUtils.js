@@ -71,11 +71,16 @@ export const saveJobsToStorage = (jobs) => {
   localStorage.setItem('job_planner_jobs', JSON.stringify(jobs));
 };
 
-export const calculateDayCapacity = (dateString, jobs, productionLine = null) => {
+export const calculateDayCapacity = (dateString, jobs, productionLine ) => {
+  console.log('productionLine', productionLine);
+  console.log('jobs', jobs);
+  
   const dayJobs = jobs.filter(job => 
     job.scheduledDate === dateString &&
-    (productionLine === null || job.productionLine === productionLine)
+    (productionLine === "all" || job.productionLine === productionLine)
   );
+  
+  console.log('dayJobs', dayJobs);
   
   const scheduledHours = dayJobs.reduce((sum, job) => sum + job.requiredHours, 0);
   

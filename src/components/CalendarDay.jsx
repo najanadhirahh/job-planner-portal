@@ -50,8 +50,8 @@ const CalendarDay = ({ date, capacity, onDrop, onDragOver, onClick, handleJobDra
   return (
     <Card
       sx={{
-        height: { xs: 140, sm: 160, md: 190 },
-        width: { xs: '100%', sm: 130, md: 150 },
+        height: { xs: 140, sm: 160, md: 150 },
+        width: { xs: '100%' },
         maxWidth: '100%',
         cursor: 'pointer',
         boxShadow: isDragOver ? 6 : 1,
@@ -62,7 +62,7 @@ const CalendarDay = ({ date, capacity, onDrop, onDragOver, onClick, handleJobDra
           boxShadow: 2,
           transform: 'scale(1.02)'
         },
-        flex: 1
+        // flex: 1
       }}
       onDrop={handleLocalDrop}
       onDragOver={handleLocalDragOver}
@@ -80,11 +80,11 @@ const CalendarDay = ({ date, capacity, onDrop, onDragOver, onClick, handleJobDra
       }}>
         {/* Top Section - Date and Edit Button */}
         <Box display="flex" justifyContent="space-between" alignItems="flex-start">
-          <Box>
+          <Box display="flex" flexDirection="row" alignItems="flex-end" gap={0.5}>
             <Typography variant="h6" component="div" sx={{ fontSize: { xs: '1rem', sm: '1.1rem', md: '1.25rem' } }}>
               {dayNumber}
             </Typography>
-            <Typography variant="caption" color="text.secondary" display="block" sx={{ fontSize: { xs: '0.6rem', sm: '0.7rem' } }}>
+            <Typography variant="caption" color="text.secondary" display="block" sx={{pb:0.5, fontSize: { xs: '0.6rem', sm: '0.7rem' } }}>
               {monthName}
             </Typography>
           </Box>
