@@ -50,7 +50,7 @@ const CalendarDay = ({ date, capacity, onDrop, onDragOver, onClick, handleJobDra
   return (
     <Card
       sx={{
-        height: { xs: 140, sm: 160, md: 150 },
+        height: { xs: 140, sm: 160, md: 140 },
         width: { xs: '100%' },
         maxWidth: '100%',
         cursor: 'pointer',
@@ -96,7 +96,11 @@ const CalendarDay = ({ date, capacity, onDrop, onDragOver, onClick, handleJobDra
         </Box>
 
         {/* Middle Section - Job Names */}
-        <Box sx={{ flex: 1, minHeight: 0, overflow: 'hidden', my: 0.5 }}>
+        <Box sx={{ flex: 1, minHeight: 0, overflow: 'hidden', my: 0.5,
+          "&::-webkit-scrollbar": {
+                  display: "none",
+              },
+         }}>
           {capacity.jobs.length > 0 ? (
             <Box sx={{ maxHeight: '100%', overflow: 'auto' }}>
               {capacity.jobs.slice(0, 3).map((job, index) => (
@@ -174,31 +178,60 @@ const CalendarDay = ({ date, capacity, onDrop, onDragOver, onClick, handleJobDra
                 display: 'block'
               }}
             >
-              No jobs scheduled
+              {/* No jobs scheduled */}
             </Typography>
           )}
         </Box>
 
         {/* Bottom Section - Capacity Info */}
-        <Box>
-          <Chip
-            label={`${capacity.scheduledHours.toFixed(1)}h / ${capacity.utilization}%`}
-            color={capacityColor}
+        <Box 
+          backgroundColor={capacityColor} 
+          display={'flex'} 
+          justifyContent={'space-between'}
+          borderRadius={1}
+          sx={{
+            backgroundColor: 
+              capacity.utilization <= 60 ? '#c6f8b6ff' : // Green
+              capacity.utilization <= 85 ? '#f5d09aff' : // Orange
+              '#f8a19bff', // Red
+            p: 0.5
+          }}
+        >
+          {/* <Chip
+            label={`${capacity.scheduledHours}h /${capacity.totalCapacity}h total ${capacity.utilization}%` }
             size="small"
             sx={{
+              backgroundColor: 
+                capacity.utilization <= 60 ? '#c6f8b6ff' : // Green
+                capacity.utilization <= 85 ? '#f5d09aff' : // Orange
+                '#f8a19bff', // Red
               fontSize: { xs: '0.6rem', sm: '0.7rem' },
               height: { xs: 18, sm: 20 },
               mb: 0.5,
               width: '100%'
             }}
-          />
+          /> */}
+          <Typography
+            variant="caption"
+            // color={capacityColor}
+            display="block"
+            sx={{ 
+              fontSize: { xs: '0.55rem', sm: '0.65rem' },
+              // fontWeight: 'bold',
+            // color: capacity.utilization <= 60 ? '#c6f8b6ff' : // Green
+            //     capacity.utilization <= 85 ? '#f5d09aff' : // Orange
+            //     '#f8a19bff', // Red 
+          }}
+          >
+            {capacity.scheduledHours}h /{capacity.totalCapacity}h total
+          </Typography>
           <Typography
             variant="caption"
             color="text.secondary"
             display="block"
             sx={{ fontSize: { xs: '0.55rem', sm: '0.65rem' } }}
           >
-            {capacity.totalCapacity}h total
+            {capacity.utilization}%
           </Typography>
         </Box>
       </CardContent>

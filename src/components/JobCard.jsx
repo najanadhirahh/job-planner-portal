@@ -67,14 +67,28 @@ const JobCard = ({ job, onDragStart }) => {
     >
       {job.name}
     </Typography>
-    <Chip 
+    <Box display="flex" alignItems="center" gap={0.5} justifyContent="flex-end">
+      <Chip 
       label={job.priorityLevel}
       color={getPriorityColor(job.priorityLevel)}
       size="small"
-      // sx={{ gridColumn: 2, flexShrink: 0 }}
+      sx={{ 
+        minWidth: 60,
+        maxWidth: 60,
+        width: 60, // Fixed width
+        '& .MuiChip-label': {
+          px: 0.5,
+          textAlign: 'center',
+          width: '100%',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap'
+        }
+      }}
     />
+    </Box>
+    
 
-    {/* Row 2: Job ID and Customer */}
     <Box display="flex" alignItems="center" gap={0.5}>
       <GripIcon fontSize="small" color="action" />
       <Typography variant="caption" color="text.secondary" noWrap>

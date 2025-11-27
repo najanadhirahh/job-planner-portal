@@ -8,7 +8,16 @@ export const PRODUCTION_LINES = [
 ];
 
 export const SAMPLE_JOBS = [
- 
+ {
+    id: 'job-001',
+    name: 'Component Testing B',
+    customer: 'DEF Manufacturing',
+    requiredHours: 3.0,
+    priorityLevel: PRIORITY_LEVELS.HIGH,
+    deadline: '2025-12-05',
+    status: JOB_STATUS.UNFIRMED,
+    productionLine: 'assorted'
+  },
   {
     id: 'job-002',
     name: 'Component Testing B',
@@ -54,8 +63,8 @@ export const SAMPLE_JOBS = [
 ];
 
 export const getJobsFromStorage = () => {
-  const stored = localStorage.getItem('job_planner_jobs');
-  return stored ? JSON.parse(stored) : SAMPLE_JOBS;
+  // const stored = localStorage.getItem('job_planner_jobs');
+  return SAMPLE_JOBS;
 };
 
 export const saveJobsToStorage = (jobs) => {
@@ -91,8 +100,11 @@ export const calculateDayCapacity = (dateString, jobs, productionLine ) => {
 };
 
 export const getCapacityColor = (utilization) => {
+  console.log('u', utilization);
+  
   if (utilization <= 60) return 'success';
   if (utilization <= 85) return 'warning';
+  // if (utilization <= 100) return 'info';
   return 'error';
 };
 
