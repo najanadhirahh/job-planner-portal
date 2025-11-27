@@ -71,23 +71,26 @@ export const saveJobsToStorage = (jobs) => {
   localStorage.setItem('job_planner_jobs', JSON.stringify(jobs));
 };
 
-export const calculateDayCapacity = (date, jobs, productionLine) => {
+export const calculateDayCapacity = (dateString, jobs, productionLine = null) => {
   const dayJobs = jobs.filter(job => 
-    job.scheduledDate === date && 
-    job.productionLine === productionLine
+    job.scheduledDate === dateString &&
+    (productionLine === null || job.productionLine === productionLine)
   );
   
   const scheduledHours = dayJobs.reduce((sum, job) => sum + job.requiredHours, 0);
-  const line = PRODUCTION_LINES.find(pl => pl.id === productionLine);
-  const totalCapacity = line?.dailyCapacity || 17.5;
-  const utilization = Math.round((scheduledHours / totalCapacity) * 100);
-
+  
+  // Calculate total capacity based on production line or all lines
+  const totalCapacity = productionLine 
+    ? (PRODUCTION_LINES.find(line => line.id === productionLine)?.dailyCapacity || 8)
+    : PRODUCTION_LINES.reduce((sum, line) => sum + line.dailyCapacity, 0);
+  
+  const utilization = totalCapacity > 0 ? Math.round((scheduledHours / totalCapacity) * 100) : 0;
+  
   return {
-    date,
+    jobs: dayJobs,
     scheduledHours,
     totalCapacity,
-    utilization,
-    jobs: dayJobs
+    utilization
   };
 };
 

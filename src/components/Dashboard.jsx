@@ -42,7 +42,7 @@ const Dashboard = () => {
   const { enqueueSnackbar } = useSnackbar();
 
   const [jobs, setJobs] = useState([]);
-  const [selectedProductionLine, setSelectedProductionLine] = useState('assorted');
+  const [selectedProductionLine, setSelectedProductionLine] = useState('all');
   const [currentDate, setCurrentDate] = useState(new Date());
   const [draggedJob, setDraggedJob] = useState(null);
   const [viewMode, setViewMode] = useState('month');
@@ -53,7 +53,9 @@ const Dashboard = () => {
   const [unfirmedJobs, setUnfirmedJobs] = useState([]);
   const [firmedJobs, setFirmedJobs] = useState([]);
   // const [jobs, setJobs] = useState([]); // Your main jobs array
+  const allJobs = jobs.filter(job => job.productionLine === selectedProductionLine);
 
+  
   // In your Dashboard component, replace the direct setState calls with:
   useEffect(() => {
     const loadedJobs = getJobsFromStorage();
@@ -64,12 +66,12 @@ const Dashboard = () => {
     // Filter jobs whenever jobs or selectedProductionLine changes
     const filteredFirmedJobs = jobs.filter(job =>
       job.status === JOB_STATUS.FIRMED &&
-      job.productionLine === selectedProductionLine
+      (selectedProductionLine === "all" || job.productionLine === selectedProductionLine)
     );
 
     const filteredUnfirmedJobs = jobs.filter(job =>
       job.status === JOB_STATUS.UNFIRMED &&
-      job.productionLine === selectedProductionLine
+      (selectedProductionLine === "all" || job.productionLine === selectedProductionLine)
     );
 
     setFirmedJobs(filteredFirmedJobs);
@@ -209,14 +211,21 @@ const Dashboard = () => {
   const calendarDays = generateCalendarDays();
 
   // Calculate summary statistics
-  const scheduledJobs = jobs.filter(job =>
-    job.status === JOB_STATUS.FIRMED &&
-    job.productionLine === selectedProductionLine
-  );
+  const scheduledJobs = selectedProductionLine === "all" 
+  ? jobs.filter(job => job.status === JOB_STATUS.FIRMED)
+  : jobs.filter(job => 
+      job.status === JOB_STATUS.FIRMED && 
+      job.productionLine === selectedProductionLine
+    );
 
   const totalScheduledHours = scheduledJobs.reduce((sum, job) => sum + job.requiredHours, 0);
   const selectedLine = PRODUCTION_LINES.find(line => line.id === selectedProductionLine);
-  const monthlyCapacity = selectedLine ? selectedLine.dailyCapacity * 30 : 525;
+
+  // Calculate total capacity for all lines if "all" is selected
+  const monthlyCapacity = selectedProductionLine === "all" 
+    ? PRODUCTION_LINES.reduce((sum, line) => sum + line.dailyCapacity, 0) * 30
+    : selectedLine ? selectedLine.dailyCapacity * 30 : 525;
+
   const capacityUtilization = Math.round((totalScheduledHours / monthlyCapacity) * 100);
 
   return (
@@ -259,6 +268,9 @@ const Dashboard = () => {
                   label="Production Line"
                   onChange={(e) => setSelectedProductionLine(e.target.value)}
                 >
+                  <MenuItem value="all">
+                    All
+                  </MenuItem>
                   {PRODUCTION_LINES.map(line => (
                     <MenuItem key={line.id} value={line.id}>
                       {line.name}
@@ -267,7 +279,7 @@ const Dashboard = () => {
                 </Select>
               </FormControl>
             </Box>
-
+              
             <Paper sx={{ mb: 2 }}>
               <Tabs
                 value={activeTab}
@@ -403,7 +415,12 @@ const Dashboard = () => {
                   {calendarDays.map((date, index) => {
                     const dateString = date.toISOString().split('T')[0];
                     const dayOfWeek = date.getDay(); // 0 = Sunday, 1 = Monday, etc.
-                    const capacity = calculateDayCapacity(dateString, jobs, selectedProductionLine);
+                    
+                    const capacity = calculateDayCapacity(
+                      dateString, 
+                      jobs, 
+                      selectedProductionLine === "all" ? null : selectedProductionLine
+                    );
 
                     return (
                       <Grid
