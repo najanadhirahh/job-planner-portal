@@ -48,55 +48,65 @@ const JobCard = ({ job, onDragStart }) => {
       onMouseLeave={() => setIsHovered(false)}
     >
       <CardContent sx={{ p: 2 }}>
-        <Box display="flex" alignItems="flex-start" justifyContent="space-between" mb={1}>
-          <Box display="flex" alignItems="flex-start" gap={1} flex={1} minWidth={0}>
-            {isHovered && (
-              <IconButton size="small" sx={{ p: 0, mt: 0.5 }}>
-                <GripIcon fontSize="small" color="action" />
-              </IconButton>
-            )}
-            <Box flex={1} minWidth={0}>
-              <Typography variant="subtitle2" noWrap>
-                {job.name}
-              </Typography>
-              <Typography variant="caption" color="text.secondary" noWrap>
-                ID: {job.id}
-              </Typography>
-            </Box>
-          </Box>
-          <Chip 
-            label={job.priorityLevel}
-            color={getPriorityColor(job.priorityLevel)}
-            size="small"
-            sx={{ flexShrink: 0 }}
-          />
-        </Box>
-        
-        <Box display="flex" flexDirection="column" gap={0.5}>
-          <Box display="flex" alignItems="center" gap={1}>
-            <UserIcon fontSize="small" color="action" />
-            <Typography variant="caption" color="text.secondary" noWrap>
-              {job.customer}
-            </Typography>
-          </Box>
-          
-          <Box display="flex" alignItems="center" gap={1}>
-            <ClockIcon fontSize="small" color="action" />
-            <Typography variant="caption" color="text.secondary">
-              {job.requiredHours}h required
-            </Typography>
-          </Box>
-          
-          {job.deadline && (
-            <Box display="flex" alignItems="center" gap={1}>
-              <CalendarIcon fontSize="small" color="action" />
-              <Typography variant="caption" color="text.secondary">
-                Due: {new Date(job.deadline).toLocaleDateString()}
-              </Typography>
-            </Box>
-          )}
-        </Box>
-      </CardContent>
+  {/* Grid Container */}
+  <Box sx={{ 
+    display: 'grid', 
+    gridTemplateColumns: '1fr auto',
+    gap: 1,
+    alignItems: 'center'
+  }}>
+    
+    {/* Row 1: Job Name and Priority */}
+    <Typography 
+      variant="subtitle2" 
+      noWrap 
+      sx={{ 
+        gridColumn: 1,
+        lineHeight: 1.2 
+      }}
+    >
+      {job.name}
+    </Typography>
+    <Chip 
+      label={job.priorityLevel}
+      color={getPriorityColor(job.priorityLevel)}
+      size="small"
+      // sx={{ gridColumn: 2, flexShrink: 0 }}
+    />
+
+    {/* Row 2: Job ID and Customer */}
+    <Box display="flex" alignItems="center" gap={0.5}>
+      <GripIcon fontSize="small" color="action" />
+      <Typography variant="caption" color="text.secondary" noWrap>
+        {job.id}
+      </Typography>
+    </Box>
+    
+    <Box display="flex" alignItems="center" gap={0.5} justifyContent="flex-start">
+      <UserIcon fontSize="small" color="action" />
+      <Typography variant="caption" color="text.secondary" noWrap>
+        {job.customer}
+      </Typography>
+    </Box>
+
+    {/* Row 3: Hours and Deadline */}
+    <Box display="flex" alignItems="center" gap={0.5}>
+      <ClockIcon fontSize="small" color="action" />
+      <Typography variant="caption" color="text.secondary">
+        {job.requiredHours}h
+      </Typography>
+    </Box>
+
+    {job.deadline && (
+      <Box display="flex" alignItems="center" gap={0.5} justifyContent="flex-start">
+        <CalendarIcon fontSize="small" color="action" />
+        <Typography variant="caption" color="text.secondary">
+          {new Date(job.deadline).toLocaleDateString()}
+        </Typography>
+      </Box>
+    )}
+  </Box>
+</CardContent>
     </Card>
   );
 };

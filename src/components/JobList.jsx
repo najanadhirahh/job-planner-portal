@@ -60,20 +60,19 @@ const JobList = ({
       onDrop={handleDrop}
     >
       <CardContent>
-        <Stack spacing={1} mb={2}> 
-        <Typography variant="h6" gutterBottom>
+       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        {/* <Typography variant="h6">
           {title}
-        </Typography>
-        <Typography variant="body2" color="text.secondary" gutterBottom>
+        </Typography> */}
+         <Typography variant="body2" color="text.secondary">
           Total: {jobs.length} orders
         </Typography>
-        </Stack>
-
         {acceptDrop && (
           <Typography variant="caption" color="primary" display="block" gutterBottom>
             Drop jobs here to unschedule
           </Typography>
         )}
+      </Box>
 
         <Box sx={{
           maxHeight: 400,

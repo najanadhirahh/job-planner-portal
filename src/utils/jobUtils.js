@@ -8,21 +8,12 @@ export const PRODUCTION_LINES = [
 ];
 
 export const SAMPLE_JOBS = [
-  {
-    id: 'job-001',
-    name: 'Widget Assembly A',
-    customer: 'ABC Corp',
-    requiredHours: 8.5,
-    priorityLevel: PRIORITY_LEVELS.HIGH,
-    deadline: '2025-11-30',
-    status: JOB_STATUS.UNFIRMED,
-    productionLine: 'assorted'
-  },
+ 
   {
     id: 'job-002',
     name: 'Component Testing B',
     customer: 'XYZ Industries',
-    requiredHours: 6.0,
+    requiredHours: 3.0,
     priorityLevel: PRIORITY_LEVELS.MEDIUM,
     deadline: '2025-12-05',
     status: JOB_STATUS.UNFIRMED,
@@ -42,7 +33,7 @@ export const SAMPLE_JOBS = [
     id: 'job-004',
     name: 'Package Processing D',
     customer: 'GHI Logistics',
-    requiredHours: 12.0,
+    requiredHours: 2.0,
     priorityLevel: PRIORITY_LEVELS.HIGH,
     deadline: '2025-11-28',
     status: JOB_STATUS.FIRMED,
@@ -53,7 +44,7 @@ export const SAMPLE_JOBS = [
     id: 'job-005',
     name: 'Final Assembly E',
     customer: 'JKL Systems',
-    requiredHours: 9.5,
+    requiredHours: 1.5,
     priorityLevel: PRIORITY_LEVELS.MEDIUM,
     deadline: '2025-12-01',
     status: JOB_STATUS.FIRMED,
