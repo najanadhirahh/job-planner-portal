@@ -59,8 +59,8 @@ const JobList = ({
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
     >
-      <CardContent>
-       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <CardContent sx={{px:0}}>
+       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', px:1 }}>
         {/* <Typography variant="h6">
           {title}
         </Typography> */}
@@ -81,7 +81,7 @@ const JobList = ({
         }}>
           {jobs.length === 0 ? (
             <Paper sx={{
-              p: 4,
+              p: 2,
               textAlign: 'center',
               bgcolor: acceptDrop ? 'grey.50' : 'background.default',
               border: acceptDrop ? '2px dashed' : 'none',

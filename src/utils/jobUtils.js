@@ -46,7 +46,7 @@ export const SAMPLE_JOBS = [
     priorityLevel: PRIORITY_LEVELS.HIGH,
     deadline: '2025-11-28',
     status: JOB_STATUS.FIRMED,
-    scheduledDate: '2025-10-29',
+    scheduledDate: '2025-11-29',
     productionLine: 'packaging'
   },
   {
@@ -56,8 +56,28 @@ export const SAMPLE_JOBS = [
     requiredHours: 1.5,
     priorityLevel: PRIORITY_LEVELS.MEDIUM,
     deadline: '2025-12-01',
-    status: JOB_STATUS.FIRMED,
-    scheduledDate: '2025-10-30',
+    status: JOB_STATUS.UNFIRMED,
+    scheduledDate: '2025-12-10',
+    productionLine: 'assembly'
+  },
+  {
+    id: 'job-006',
+    name: 'Final Assembly G',
+    customer: 'JKL Systems',
+    requiredHours: 0.5,
+    priorityLevel: PRIORITY_LEVELS.HIGH,
+    deadline: '2025-12-01',
+    status: JOB_STATUS.UNFIRMED,
+    productionLine: 'assembly'
+  },
+  {
+    id: 'job-007',
+    name: 'Final Assembly F',
+    customer: 'JKL Systems',
+    requiredHours: 2.5,
+    priorityLevel: PRIORITY_LEVELS.LOW,
+    deadline: '2025-12-01',
+    status: JOB_STATUS.UNFIRMED,
     productionLine: 'assembly'
   }
 ];
@@ -71,17 +91,17 @@ export const saveJobsToStorage = (jobs) => {
   localStorage.setItem('job_planner_jobs', JSON.stringify(jobs));
 };
 
-export const calculateDayCapacity = (dateString, jobs, productionLine ) => {
-  console.log('productionLine', productionLine);
-  console.log('jobs', jobs);
-  
-  const dayJobs = jobs.filter(job => 
-    job.scheduledDate === dateString &&
-    (productionLine === "all" || job.productionLine === productionLine)
-  );
-  
-  console.log('dayJobs', dayJobs);
-  
+export const calculateDayCapacity = (dateString, jobs, productionLine) => {  
+  const dayJobs = jobs.filter(job => {
+    if (!job.scheduledDate) return false;
+    
+    // Direct string comparison if both are in YYYY-MM-DD format
+    const matchesDate = job.scheduledDate === dateString;
+    const matchesProductionLine = productionLine === "all" || job.productionLine === productionLine;
+    
+    return matchesDate && matchesProductionLine;
+  });
+    
   const scheduledHours = dayJobs.reduce((sum, job) => sum + job.requiredHours, 0);
   
   // Calculate total capacity based on production line or all lines
@@ -100,7 +120,7 @@ export const calculateDayCapacity = (dateString, jobs, productionLine ) => {
 };
 
 export const getCapacityColor = (utilization) => {
-  console.log('u', utilization);
+  // console.log('u', utilization);
   
   if (utilization <= 60) return 'success';
   if (utilization <= 85) return 'warning';

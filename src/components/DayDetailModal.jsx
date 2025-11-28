@@ -41,7 +41,7 @@ const DayDetailModal = ({
     if (util <= 85) return 'warning';
     return 'error';
   };
-console.log('jpbs', jobs);
+// console.log('jpbs', jobs);
 
   return (
     <Dialog 

@@ -11,20 +11,25 @@ import {
 } from '@mui/material';
 import { Edit as EditIcon } from '@mui/icons-material';
 
-const CalendarDay = ({ date, capacity, onDrop, onDragOver, onClick, handleJobDragStart }) => {
+const CalendarDay = ({ date, isPastDate, capacity, onDrop, onDragOver, onClick, handleJobDragStart }) => {
   const [isDragOver, setIsDragOver] = useState(false);
 
-  const dayName = date.toLocaleDateString('en-US', { weekday: 'short' });
   const dayNumber = date.getDate();
   const monthName = date.toLocaleDateString('en-US', { month: 'short' });
-  const dateString = date.toISOString().split('T')[0];
+  
+  // FIX: Use local date components instead of ISO string
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const dateString = `${year}-${month}-${day}`;
 
-  const capacityColor = getCapacityColor(capacity.utilization);
   const isToday = new Date().toDateString() === date.toDateString();
 
   const handleDragEnter = (e) => {
     e.preventDefault();
-    setIsDragOver(true);
+    if (!isPastDate) {
+      setIsDragOver(true);
+    }
   };
 
   const handleDragLeave = (e) => {
@@ -34,41 +39,47 @@ const CalendarDay = ({ date, capacity, onDrop, onDragOver, onClick, handleJobDra
 
   const handleLocalDrop = (e) => {
     e.preventDefault();
-    setIsDragOver(false);
-    onDrop(e, dateString);
+    if (!isPastDate) {
+      setIsDragOver(false);
+      onDrop(e, dateString);
+    }
   };
 
   const handleLocalDragOver = (e) => {
     e.preventDefault();
-    onDragOver(e);
+    if (!isPastDate) {
+      onDragOver(e);
+    }
   };
 
-  const handleJobDragEnd = (e) => {
-    // Optional: handle any cleanup after drag ends
+  const handleClick = () => {
+    if (!isPastDate && onClick) {
+      onClick(dateString);
+    }
   };
 
   return (
     <Card
       sx={{
-        height: { xs: 140, sm: 160, md: 140 },
+        height: { xs: 100, sm: 120, md: 140 },
         width: { xs: '100%' },
         maxWidth: '100%',
-        cursor: 'pointer',
+        cursor: isPastDate ? 'not-allowed' : 'pointer',
         boxShadow: isDragOver ? 6 : 1,
         transition: 'all 0.2s',
         border: isToday ? '2px solid #1976d2' : '1px solid #e0e0e0',
-        bgcolor: isDragOver ? 'primary.light' : 'background.paper',
-        '&:hover': {
+        bgcolor: isDragOver ? 'primary.light' : (isPastDate ? 'action.disabledBackground' : 'background.paper'),
+        opacity: isPastDate ? 0.6 : 1,
+        '&:hover': !isPastDate ? {
           boxShadow: 2,
           transform: 'scale(1.02)'
-        },
-        // flex: 1
+        } : {},
       }}
       onDrop={handleLocalDrop}
       onDragOver={handleLocalDragOver}
       onDragEnter={handleDragEnter}
       onDragLeave={handleDragLeave}
-      onClick={() => onClick?.(dateString)}
+      onClick={handleClick}
     >
       <CardContent sx={{
         p: 1,
@@ -81,14 +92,29 @@ const CalendarDay = ({ date, capacity, onDrop, onDragOver, onClick, handleJobDra
         {/* Top Section - Date and Edit Button */}
         <Box display="flex" justifyContent="space-between" alignItems="flex-start">
           <Box display="flex" flexDirection="row" alignItems="flex-end" gap={0.5}>
-            <Typography variant="h6" component="div" sx={{ fontSize: { xs: '1rem', sm: '1.1rem', md: '1.25rem' } }}>
+            <Typography 
+              variant="h6" 
+              component="div" 
+              sx={{ 
+                fontSize: { xs: '1rem', sm: '1.1rem', md: '1.25rem' },
+                color: isPastDate ? 'text.disabled' : 'text.primary'
+              }}
+            >
               {dayNumber}
             </Typography>
-            <Typography variant="caption" color="text.secondary" display="block" sx={{pb:0.5, fontSize: { xs: '0.6rem', sm: '0.7rem' } }}>
+            <Typography 
+              variant="caption" 
+              display="block" 
+              sx={{
+                pb: 0.5, 
+                fontSize: { xs: '0.6rem', sm: '0.7rem' },
+                color: isPastDate ? 'text.disabled' : 'text.secondary'
+              }}
+            >
               {monthName}
             </Typography>
           </Box>
-          {capacity.jobs.length > 0 && (
+          {!isPastDate && capacity.jobs.length > 0 && (
             <IconButton size="small" sx={{ '& .MuiSvgIcon-root': { fontSize: { xs: '0.8rem', sm: '1rem' } } }}>
               <EditIcon fontSize="small" color="action" />
             </IconButton>
@@ -96,34 +122,39 @@ const CalendarDay = ({ date, capacity, onDrop, onDragOver, onClick, handleJobDra
         </Box>
 
         {/* Middle Section - Job Names */}
-        <Box sx={{ flex: 1, minHeight: 0, overflow: 'hidden', my: 0.5,
+        <Box sx={{ 
+          flex: 1, 
+          minHeight: 0, 
+          overflow: 'hidden', 
+          my: 0.5,
           "&::-webkit-scrollbar": {
-                  display: "none",
-              },
-         }}>
+            display: "none",
+          },
+        }}>
           {capacity.jobs.length > 0 ? (
             <Box sx={{ maxHeight: '100%', overflow: 'auto' }}>
               {capacity.jobs.slice(0, 3).map((job, index) => (
                 <Box
                   key={job.id || index}
-                  draggable
-                  onDragStart={(e) => handleJobDragStart(e, job, dateString)}
-                  onDragEnd={handleJobDragEnd}
+                  draggable={!isPastDate}
+                  onDragStart={(e) => !isPastDate && handleJobDragStart(e, job, dateString)}
+                  // onDragEnd={handleJobDragEnd}
                   sx={{
-                    cursor: 'grab',
+                    cursor: !isPastDate ? 'grab' : 'not-allowed',
                     p: 0.5,
                     mb: 0.3,
                     borderRadius: 1,
                     backgroundColor: 'background.default',
                     border: '1px solid',
                     borderColor: 'divider',
-                    '&:hover': {
+                    opacity: isPastDate ? 0.6 : 1,
+                    '&:hover': !isPastDate ? {
                       backgroundColor: 'action.hover',
                       borderColor: 'primary.main'
-                    },
-                    '&:active': {
+                    } : {},
+                    '&:active': !isPastDate ? {
                       cursor: 'grabbing'
-                    }
+                    } : {}
                   }}
                 >
                   <Typography
@@ -132,7 +163,7 @@ const CalendarDay = ({ date, capacity, onDrop, onDragOver, onClick, handleJobDra
                       display: 'block',
                       fontSize: { xs: '0.55rem', sm: '0.65rem', md: '0.7rem' },
                       fontWeight: 500,
-                      color: 'text.primary',
+                      color: isPastDate ? 'text.disabled' : 'text.primary',
                       lineHeight: 1.2,
                       overflow: 'hidden',
                       textOverflow: 'ellipsis',
@@ -146,7 +177,7 @@ const CalendarDay = ({ date, capacity, onDrop, onDragOver, onClick, handleJobDra
                       variant="caption"
                       sx={{
                         fontSize: { xs: '0.5rem', sm: '0.55rem' },
-                        color: 'text.secondary'
+                        color: isPastDate ? 'text.disabled' : 'text.secondary'
                       }}
                     >
                       {job.duration}h
@@ -159,7 +190,7 @@ const CalendarDay = ({ date, capacity, onDrop, onDragOver, onClick, handleJobDra
                   variant="caption"
                   sx={{
                     fontSize: { xs: '0.5rem', sm: '0.6rem' },
-                    color: 'text.secondary',
+                    color: isPastDate ? 'text.disabled' : 'text.secondary',
                     fontStyle: 'italic'
                   }}
                 >
@@ -167,69 +198,54 @@ const CalendarDay = ({ date, capacity, onDrop, onDragOver, onClick, handleJobDra
                 </Typography>
               )}
             </Box>
-          ) : (
+          ) : isPastDate ? (
             <Typography
               variant="caption"
               sx={{
                 fontSize: { xs: '0.55rem', sm: '0.65rem' },
-                color: 'text.secondary',
+                color: 'text.disabled',
                 fontStyle: 'italic',
                 textAlign: 'center',
                 display: 'block'
               }}
             >
-              {/* No jobs scheduled */}
+              Past date
             </Typography>
-          )}
+          ) : null}
         </Box>
 
         {/* Bottom Section - Capacity Info */}
         <Box 
-          backgroundColor={capacityColor} 
           display={'flex'} 
           justifyContent={'space-between'}
           borderRadius={1}
           sx={{
-            backgroundColor: 
-              capacity.utilization <= 60 ? '#c6f8b6ff' : // Green
-              capacity.utilization <= 85 ? '#f5d09aff' : // Orange
-              '#f8a19bff', // Red
+            backgroundColor: isPastDate ? 'action.disabled' : (
+              capacity.utilization <= 10 ? '#f0f0f0ff' :
+              capacity.utilization <= 60 ? '#c6f8b6ff' :
+              capacity.utilization <= 85 ? '#f5d09aff' :
+              '#f8a19bff'
+            ),
             p: 0.5
           }}
         >
-          {/* <Chip
-            label={`${capacity.scheduledHours}h /${capacity.totalCapacity}h total ${capacity.utilization}%` }
-            size="small"
-            sx={{
-              backgroundColor: 
-                capacity.utilization <= 60 ? '#c6f8b6ff' : // Green
-                capacity.utilization <= 85 ? '#f5d09aff' : // Orange
-                '#f8a19bff', // Red
-              fontSize: { xs: '0.6rem', sm: '0.7rem' },
-              height: { xs: 18, sm: 20 },
-              mb: 0.5,
-              width: '100%'
-            }}
-          /> */}
           <Typography
             variant="caption"
-            // color={capacityColor}
             display="block"
             sx={{ 
               fontSize: { xs: '0.55rem', sm: '0.65rem' },
-              // fontWeight: 'bold',
-            // color: capacity.utilization <= 60 ? '#c6f8b6ff' : // Green
-            //     capacity.utilization <= 85 ? '#f5d09aff' : // Orange
-            //     '#f8a19bff', // Red 
-          }}
+              color: isPastDate ? 'text.disabled' : 'text.primary'
+            }}
           >
             {capacity.scheduledHours}h /{capacity.totalCapacity}h total
           </Typography>
           <Typography
             variant="caption"
-            color="text.secondary"
             display="block"
-            sx={{ fontSize: { xs: '0.55rem', sm: '0.65rem' } }}
+            sx={{ 
+              fontSize: { xs: '0.55rem', sm: '0.65rem' },
+              color: isPastDate ? 'text.disabled' : 'text.secondary'
+            }}
           >
             {capacity.utilization}%
           </Typography>

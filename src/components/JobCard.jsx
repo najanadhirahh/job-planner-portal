@@ -47,7 +47,7 @@ const JobCard = ({ job, onDragStart }) => {
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <CardContent sx={{ p: 2 }}>
+      <CardContent sx={{ p: 1 }}>
   {/* Grid Container */}
   <Box sx={{ 
     display: 'grid', 

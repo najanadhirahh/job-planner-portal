@@ -27,7 +27,9 @@ import {
   Tabs,
   Tab,
   IconButton,
-  Paper
+  Paper,
+  Card,
+  CardContent
 } from '@mui/material';
 import {
   ChevronLeft,
@@ -92,15 +94,13 @@ const Dashboard = () => {
 
   const handleDrop = (e, targetDate) => {
     e.preventDefault();
-
+    
     try {
       const jobData = JSON.parse(e.dataTransfer.getData('application/json'));
 
       if (jobData.draggedFrom === 'calendar') {
-        // Job was dragged from calendar - move to unfirmed
         handleUnfirmedJobDrop(jobData);
       } else {
-        // Job was dragged from job list - schedule it
         scheduleJob(jobData, targetDate);
       }
     } catch (error) {
@@ -111,23 +111,25 @@ const Dashboard = () => {
   };
 
   const scheduleJob = (job, targetDate) => {
-    const updatedJobs = jobs.map(j =>
-      j.id === job.id
-        ? {
-          ...j,
-          scheduledDate: targetDate,
-          status: JOB_STATUS.FIRMED
-        }
-        : j
-    );
-
+    const [year, month, day] = targetDate.split('-').map(Number);
+    
+    const scheduledDate = new Date(year, month - 1, day);
+    scheduledDate.setHours(0, 0, 0, 0);
+        
+    const formattedYear = scheduledDate.getFullYear();
+    const formattedMonth = String(scheduledDate.getMonth() + 1).padStart(2, '0');
+    const formattedDay = String(scheduledDate.getDate()).padStart(2, '0');
+    const formattedDate = `${formattedYear}-${formattedMonth}-${formattedDay}`;
+        
+    const updatedJobs = jobs.map(j => 
+    j.id === job.id ? { 
+      ...j, 
+      scheduledDate: targetDate,
+      status: JOB_STATUS.FIRMED 
+    } : j
+  );
+    
     setJobs(updatedJobs);
-    saveJobsToStorage(updatedJobs);
-
-    enqueueSnackbar(
-      `${job.name} has been scheduled for ${new Date(targetDate).toLocaleDateString()}`,
-      { variant: 'success' }
-    );
   };
 
   const handleUnfirmedJobDrop = (droppedJob) => {
@@ -192,17 +194,30 @@ const Dashboard = () => {
     const year = currentDate.getFullYear();
     const month = currentDate.getMonth();
     const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
     const days = [];
 
-    // Add days from previous month to fill the first week
-    const startDate = new Date(firstDay);
-    startDate.setDate(startDate.getDate() - firstDay.getDay());
+    // Add empty slots for days before the first day of month
+    const firstDayOfWeek = firstDay.getDay(); // 0 = Sunday, 1 = Monday, etc.
+    
+    // Add empty slots for the first week
+    for (let i = 0; i < firstDayOfWeek; i++) {
+      days.push(null); // null represents empty day slot
+    }
 
-    // Generate 42 days (6 weeks) to fill the calendar grid
-    for (let i = 0; i < 42; i++) {
-      const date = new Date(startDate);
-      date.setDate(startDate.getDate() + i);
-      days.push(date);
+    // Add days for the current month
+    const numberOfDays = lastDay.getDate();
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Remove time for accurate comparison
+
+    for (let i = 1; i <= numberOfDays; i++) {
+      const date = new Date(year, month, i);
+      const isPastDate = date < today;
+      
+      days.push({
+        date,
+        isPastDate
+      });
     }
 
     return days;
@@ -256,7 +271,7 @@ const Dashboard = () => {
         </Toolbar>
       </AppBar>
 
-      <Box   sx={{ m: 3 }}>
+      <Box sx={{ m: 3 }} >
         <Grid container spacing={3}>
           {/* Left Panel - Job Lists */}
           <Grid item xs={12} lg={3}>
@@ -415,42 +430,55 @@ const Dashboard = () => {
                   ))}
                 </Grid>
 
-                <Grid container>
-                  {calendarDays.map((date, index) => {
-                    const dateString = date.toISOString().split('T')[0];
-                    const dayOfWeek = date.getDay(); // 0 = Sunday, 1 = Monday, etc.
-                    console.log('dayOfWeek', dayOfWeek);
-                    
-                    const capacity = calculateDayCapacity(
-                      dateString, 
-                      jobs, 
-                      selectedProductionLine === "all" ? "all" : selectedProductionLine
-                    );
-
+               <Grid container>
+                {calendarDays.map((day, index) => {
+                  if (day === null) {
                     return (
-                      <Grid
-                        item
-                        xs={12 / 7}
-                        // md
-                        key={index}
-                        // sx={{
-                        //   display: 'flex',
-                        //   justifyContent: 'flex-start',
-                        //   p: 0.5
-                        // }}
-                      >
-                        <CalendarDay
-                          date={date}
-                          capacity={capacity}
-                          onDrop={handleDrop}
-                          onDragOver={handleDragOver}
-                          onClick={handleDayClick}
-                          handleJobDragStart={handleJobDragStart}
-                        />
+                      <Grid item xs={12 / 7} key={index}>
+                        <Card sx={{ 
+                          height: { xs: 140, sm: 160, md: 140 },
+                          width: { xs: '100%' },
+                          maxWidth: '100%',
+                          bgcolor: 'transparent',
+                          boxShadow: 'none',
+                          border: 'none'
+                        }}>
+                          <CardContent sx={{ p: 1, height: '100%' }} />
+                        </Card>
                       </Grid>
                     );
-                  })}
-                </Grid>
+                  }
+
+                  const { date, isPastDate } = day;
+                  
+                  // Get date in YYYY-MM-DD format
+                  const dateObj = new Date(date);
+                  const year = dateObj.getFullYear();
+                  const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+                  const dayNumber = String(dateObj.getDate()).padStart(2, '0');
+                  const dateString = `${year}-${month}-${dayNumber}`;
+                  
+                  const capacity = calculateDayCapacity(
+                    dateString, 
+                    jobs, 
+                    selectedProductionLine === "all" ? "all" : selectedProductionLine
+                  );
+
+                  return (
+                    <Grid item xs={12 / 7} key={index}>
+                      <CalendarDay
+                        date={date}
+                        isPastDate={isPastDate}
+                        capacity={capacity}
+                        onDrop={handleDrop}
+                        onDragOver={handleDragOver}
+                        onClick={handleDayClick}
+                        handleJobDragStart={handleJobDragStart}
+                      />
+                    </Grid>
+                  );
+                })}
+              </Grid>
               </Grid>
             </Paper>
           </Grid>
